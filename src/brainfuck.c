@@ -10,7 +10,7 @@
  * Released into the public domain.
  *
  * Any being (not just humans) is free to copy, modify, publish, use, compile,
- * sell, or distribute this software, either in source code form or as a
+ * sell or distribute this software, either in source code form or as a
  * compiled binary, for any purpose, commercial or non-commercial, and by any
  * means.
  *
@@ -35,10 +35,23 @@
 
 #include <string.h>
 
-static char const *B_FILE_NAME = NULL;
+#define B_TRUE 1
+#define B_FALSE 0
+
 static char *B_INVOCATION = NULL;
 
 static size_t B_CONTAINER_LENGTH = 30000;
+
+static int B_SHOULD_READ_FROM_STDIN = B_FALSE;
+static char const *B_INPUT_FILENAME = NULL;
+
+static int B_SHOULD_EMIT_C_CODE = B_FALSE;
+static char const *B_C_CODE_FILENAME = "brainfuck.c";
+
+static int B_SHOULD_OPTIMIZE_CODE = B_TRUE;
+static int B_SHOULD_PRINT_BYTECODE_DISASSEMBLY = B_FALSE;
+static int B_SHOULD_EXPLAIN_CODE = B_FALSE;
+static int B_SHOULD_EXECUTE_CODE = B_TRUE;
 
 enum instruction {
         B_INVALID = 0x00,
@@ -94,8 +107,6 @@ static inline char *read_file(char const *filename)
         FILE *file = fopen(filename, "rt");
         long file_length = 0;
 
-        B_FILE_NAME = filename;
-
         if (file == NULL) {
                 abort();
         }
@@ -121,6 +132,36 @@ static inline char *read_file(char const *filename)
         }
 
         fclose(file);
+        return contents;
+}
+
+static inline char *read_stdin(void)
+{
+        char buffer[1024];
+
+        size_t content_size = 1;
+        char *contents = malloc(sizeof (char) * 1024);
+
+        if (contents == NULL) {
+                abort();
+        }
+
+        *contents = '\0';
+
+        while (fgets(buffer, 1024, stdin)) {
+                char *old_contents = contents;
+
+                content_size += strlen(buffer);
+                contents = realloc(contents, sizeof (char) * content_size);
+
+                if (contents == NULL) {
+                        free(old_contents);
+                        abort();
+                }
+
+                strcat(contents, buffer);
+        }
+
         return contents;
 }
 
@@ -459,7 +500,7 @@ static void emit_c_code(struct program const *program, char const *filename)
                 "static char *pointer = container;\n"
                 "\n"
                 "int main(int count, char **arguments)\n"
-                "{\n", B_FILE_NAME, B_CONTAINER_LENGTH);
+                "{\n", B_INPUT_FILENAME, B_CONTAINER_LENGTH);
 
 
         for (; i != program->number_of_opcodes; ++i) {
@@ -536,6 +577,118 @@ static inline void free_program(struct program *program)
         free(program);
 }
 
+static void display_help_screen(void)
+{
+        printf("    dP                         oo          .8888b             "
+                "      dP\n    88                                     88   \" "
+                "                  88\n    88d888b. 88d888b. .d8888b. dP 88d88"
+                "8b. 88aaa  dP    dP .d8888b. 88  .dP\n    88'  `88 88'  `88 8"
+                "8'  `88 88 88'  `88 88     88    88 88'  `\"\" 88888\"\n    8"
+                "8.  .88 88       88.  .88 88 88    88 88     88.  .88 88.  .."
+                ". 88  `8b.\n    88Y8888' dP       `88888P8 dP dP    dP dP    "
+                " `88888P' `88888P' dP   `YP\n"
+                "\n"
+                "Authored in 2013.  See README for a list of contributors.\n"
+                "Released into the public domain.\n"
+                "\n"
+                "Usage:\n"
+                "        %s [--cdehuxz] <input>\n"
+                "\n"
+                "Options:\n"
+                "        --                          read input from stdin\n"
+                "        -c [filename=`brainfuck.c`] generate and emit C "
+                                                    "code\n"
+                "        -d                          print disassembly\n"
+                "        -e                          explain source code\n"
+                "        -h                          display this help "
+                                                    "screen\n"
+                "        -u                          disable optimizations\n"
+                "        -x                          disable interpretation\n"
+                "        -z <length=`30000`>         set tape length\n",
+                B_INVOCATION);
+}
+
+static void parse_command_line(int count, char **arguments)
+{
+        int i = 1;
+
+        for (; i < count; ++i) {
+                switch (arguments[i][0]) {
+                case '-':
+                        switch(arguments[i][1]) {
+                        case '-':
+                                B_SHOULD_READ_FROM_STDIN = B_TRUE;
+                                break;
+
+                        case 'c':
+                                B_SHOULD_EMIT_C_CODE = B_TRUE;
+
+                                if (i + 1 < count) {
+                                        if (arguments[i + 1][0] != '\0') {
+                                                B_C_CODE_FILENAME =
+                                                        arguments[++i];
+                                        }
+                                }
+                                break;
+
+                        case 'd':
+                                B_SHOULD_PRINT_BYTECODE_DISASSEMBLY = B_TRUE;
+                                break;
+
+                        case 'e':
+                                B_SHOULD_EXPLAIN_CODE = B_TRUE;
+                                break;
+
+                        case 'h':
+                                display_help_screen();
+                                break;
+
+                        case 'u':
+                                B_SHOULD_OPTIMIZE_CODE = B_FALSE;
+                                break;
+
+                        case 'x':
+                                B_SHOULD_EXECUTE_CODE = B_FALSE;
+                                break;
+
+                        case 'z':
+                                if (i + 1 >= count) {
+                                        printf("%s: the argument `z` requires "
+                                                "a numerical parameter\n",
+                                                B_INVOCATION);
+                                        abort();
+                                }
+
+                                B_CONTAINER_LENGTH = atoi(arguments[++i]);
+
+                                if (B_CONTAINER_LENGTH == 0) {
+                                        printf("%s: the tape length cannot be "
+                                                "alphanumerical or zero\n",
+                                                B_INVOCATION);
+                                        abort();
+                                }
+
+                                break;
+
+                        default:
+                                printf("%s: unknown option `%c`\n",
+                                        B_INVOCATION, arguments[i][1]);
+                        }
+
+                        break;
+
+                default:
+                        if (B_INPUT_FILENAME != NULL) {
+                                printf("%s: warning, overriding previously "
+                                        "specified filename\n",
+                                        B_INVOCATION);
+                        }
+
+                        B_INPUT_FILENAME = arguments[i];
+                }
+        }
+}
+
 void respond_to_signal(int signal_identifier)
 {
         (void) signal_identifier;
@@ -559,17 +712,37 @@ int main(int count, char **arguments)
                 abort();
         }
 
-        source_code = read_file(arguments[1]);
+        parse_command_line(count, arguments);
+
+        if (B_SHOULD_READ_FROM_STDIN == B_TRUE || B_INPUT_FILENAME == NULL) {
+                source_code = read_stdin();
+        } else {
+                source_code = read_file(B_INPUT_FILENAME);
+        }
+
         source_code = sanitize(&source_code);
 
-        program = run_length_encode(source_code);
+        if (B_SHOULD_OPTIMIZE_CODE == B_TRUE) {
+                program = run_length_encode(source_code);
+        }
+
         program = link_branches(program);
 
-        explain(program);
-        disassamble(program);
-        emit_c_code(program, "c-code.c");
+        if (B_SHOULD_PRINT_BYTECODE_DISASSEMBLY == B_TRUE) {
+                disassamble(program);
+        }
 
-        execute(program);
+        if (B_SHOULD_EXPLAIN_CODE == B_TRUE) {
+                explain(program);
+        }
+
+        if (B_SHOULD_EMIT_C_CODE == B_TRUE) {
+                emit_c_code(program, B_C_CODE_FILENAME);
+        }
+
+        if (B_SHOULD_EXECUTE_CODE == B_TRUE) {
+                execute(program);
+        }
 
         free_program(program);
         free(source_code);

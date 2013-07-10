@@ -64,21 +64,52 @@ form.
 
 ### Invoking the compiler
 
-Currently the compiler supports no command-line arguments. So the invocation is
-simple:
+The most straightforward way of invoking the compiler would be to simply give
+it a source file to chew on:
 
 ```bash
 brainfuck filename
 ```
 
 Executing the compiler like this, with a filename alone will result in that
-file being treated as the source code of interest.
+file being treated as the source code of interest. The compiler will then try
+to compile the source code and interpret the resulting byte code.
 
-The compiler will then try to compile the source code, interpret the resulting
-byte code and emit C code generated from the intermediate representation of the program.
+In addition to this simple use case the compiler supports some options. Here's
+the help screen for reference:
 
-As the crème de la crème, it will also output the intermediate representation
-of the program to `stdout`.
+```
+    dP                         oo          .8888b                   dP
+    88                                     88   "                   88
+    88d888b. 88d888b. .d8888b. dP 88d888b. 88aaa  dP    dP .d8888b. 88  .dP
+    88'  `88 88'  `88 88'  `88 88 88'  `88 88     88    88 88'  `"" 88888"
+    88.  .88 88       88.  .88 88 88    88 88     88.  .88 88.  ... 88  `8b.
+    88Y8888' dP       `88888P8 dP dP    dP dP     `88888P' `88888P' dP   `YP
+
+Authored in 2013.  See README for a list of contributors.
+Released into the public domain.
+
+Usage:
+        ./bin/brainfuck [--cdehuxz] <input>
+
+Options:
+        --                          read input from stdin
+        -c [filename=`brainfuck.c`] generate and emit C code
+        -d                          print disassembly
+        -e                          explain source code
+        -h                          display this help screen
+        -u                          disable optimizations
+        -x                          disable interpretation
+        -z <length=`30000`>         set tape length
+```
+
+The `[]` brackets indicate an optional block of argument. You can omit these
+at will. For example, If you'd like to emit C code into the default file
+`brainfuck.c` you can specify the `-c` option while omitting its argument.
+
+On the other hand, `<>` brackets stand for an obligatory argument block and
+they cannot be omitted; although if the input is read from `stdin` there is no
+need to specify a separate source code file as `<input>`.
 
 ## License
 
