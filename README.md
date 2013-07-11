@@ -99,6 +99,7 @@ Options:
         -e                          explain source code
         -h                          display this help screen
         -u                          disable optimizations
+        -v                          display version information
         -x                          disable interpretation
         -z <length=`30000`>         set tape length
 ```

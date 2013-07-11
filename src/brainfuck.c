@@ -35,6 +35,9 @@
 
 #include <string.h>
 
+#define B_VERSION_STRING "0.3"
+#define B_BUILD_FEATURES "core"
+
 #define B_TRUE 1
 #define B_FALSE 0
 
@@ -592,7 +595,7 @@ static void display_help_screen(void)
                 "Released into the public domain.\n"
                 "\n"
                 "Usage:\n"
-                "        %s [--cdehuxz] <input>\n"
+                "        %s [--cdehuvxz] <input>\n"
                 "\n"
                 "Options:\n"
                 "        --                          read input from stdin\n"
@@ -603,6 +606,8 @@ static void display_help_screen(void)
                 "        -h                          display this help "
                                                     "screen\n"
                 "        -u                          disable optimizations\n"
+                "        -v                          display version "
+                                                    "information\n"
                 "        -x                          disable interpretation\n"
                 "        -z <length=`30000`>         set tape length\n",
                 B_INVOCATION);
@@ -645,6 +650,12 @@ static void parse_command_line(int count, char **arguments)
 
                         case 'u':
                                 B_SHOULD_OPTIMIZE_CODE = B_FALSE;
+                                break;
+
+                        case 'v':
+                                printf("%s (brainfuck) %s (%s)\n",
+                                        B_INVOCATION, B_VERSION_STRING,
+                                        B_BUILD_FEATURES);
                                 break;
 
                         case 'x':
