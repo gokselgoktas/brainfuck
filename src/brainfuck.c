@@ -330,13 +330,12 @@ static void execute(struct program const *program)
                 abort();
         }
 
-        container = malloc(sizeof (char) * B_CONTAINER_LENGTH);
+        container = calloc(B_CONTAINER_LENGTH, sizeof (char));
 
         if (container == NULL) {
                 abort();
         }
 
-        memset(container, 0, sizeof (char) * B_CONTAINER_LENGTH);
         pointer = container;
 
         for (; i != program->number_of_opcodes; ++i) {
