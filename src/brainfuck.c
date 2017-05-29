@@ -40,6 +40,7 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/BitWriter.h>
+#include <llvm-c/Transforms/PassManagerBuilder.h>
 
 #define B_VERSION_STRING "0.4"
 #define B_BUILD_FEATURES "core:llvm-ir:bin"
@@ -402,6 +403,21 @@ static void interpret(struct program const *program)
         free(container);
 }
 
+static LLVMModuleRef optimize_llvm_module(LLVMModuleRef module)
+{
+        LLVMPassManagerRef manager = LLVMCreatePassManager();
+        LLVMPassManagerBuilderRef builder = LLVMPassManagerBuilderCreate();
+        LLVMPassManagerBuilderSetOptLevel(builder, 3);
+
+        LLVMPassManagerBuilderPopulateModulePassManager(builder, manager);
+        LLVMRunPassManager(manager, module);
+
+        LLVMPassManagerBuilderDispose(builder);
+        LLVMDisposePassManager(manager);
+
+        return module;
+}
+
 static LLVMModuleRef build_llvm_module(struct program const *program)
 {
         size_t i = 0;
@@ -648,7 +664,7 @@ static LLVMModuleRef build_llvm_module(struct program const *program)
 
         free(stack);
 
-        return module;
+        return optimize_llvm_module(module);
 }
 
 static void execute(struct program const *program)

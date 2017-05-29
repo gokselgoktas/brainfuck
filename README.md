@@ -1,6 +1,6 @@
 # Brainfuck
 
-A primitively-optimizing [Brainfuck](http://esolangs.org/wiki/brainfuck)
+A ~~primitively~~ optimizing [Brainfuck](http://esolangs.org/wiki/brainfuck)
 compiler & interpreter
 
 ## What on Earth is Brainfuck?
