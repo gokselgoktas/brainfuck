@@ -90,7 +90,7 @@ Authored in 2013.  See README for a list of contributors.
 Released into the public domain.
 
 Usage:
-        ./bin/brainfuck [--cdehuxz] <input>
+        ./brainfuck [--cdehlruvxz] <input>
 
 Options:
         --                          read input from stdin
@@ -98,6 +98,8 @@ Options:
         -d                          print disassembly
         -e                          explain source code
         -h                          display this help screen
+        -l [filename=`brainfuck.l`] generate and emit LLVM IR
+        -r                          JIT compile and execute
         -u                          disable optimizations
         -v                          display version information
         -x                          disable interpretation
